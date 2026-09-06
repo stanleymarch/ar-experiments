@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+  <title>AR Portal — Door to Another World</title>
+  <meta name="description" content="Tap the floor to open a rift. Step in: catch green cubes, dodge red ones.">
+
+  <script crossorigin="anonymous" src="./external/scripts/8frame-1.5.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/xrextras@1/dist/xrextras.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/landing-page@1/dist/landing-page.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" crossorigin="anonymous" async="true" data-preload-chunks="slam"></script>
+</head>
+
+<body>
+<script src="bundle.js"></script>
+
+<!-- HUD (over the AR view, pointer-events none) -->
+<div class="hud">
+  <div class="hud-top">
+    <span id="scoreLabel">Score: 0</span>
+    <span id="livesLabel">&#9829; &#9829; &#9829;</span>
+  </div>
+  <div id="hint" class="hint hidden">Catch <b class="c-green">green</b> &middot; dodge <b class="c-red">red</b></div>
+  <div id="promptText" class="prompt">Tap the floor to open the portal</div>
+  <div id="gameOver" class="gameover hidden">Game Over</div>
+</div>
+
+<!-- Reality-filter vignette (world-change + hit flashes) -->
+<div id="vignette"></div>
+
+<a-scene
+  portal-place
+  reality-filter
+  landing-page
+  xrextras-loading
+  xrextras-runtime-error
+  renderer="colorManagement:true; antialias:true"
+  xrweb="
+    allowedDevices: any;
+    defaultEnvironmentFogIntensity: 0.25;
+    defaultEnvironmentSkyTopColor: #0a0a16;
+    defaultEnvironmentSkyBottomColor: #14142a;
+    defaultEnvironmentSkyGradientStrength: 0.5;">
+
+  <a-camera
+    id="camera"
+    position="0 8 8"
+    raycaster="objects: .cantap"
+    cursor="fuse: false; rayOrigin: mouse;">
+  </a-camera>
+
+  <a-light type="ambient" intensity="0.6"></a-light>
+  <a-entity
+    light="type: directional; intensity: 0.9; castShadow: true; shadowMapHeight: 1024; shadowMapWidth: 1024; target: #camera"
+    xrextras-attach="target: camera; offset: 6 10 3"
+    shadow>
+  </a-entity>
+
+  <!-- Tappable ground plane (also the shadow catcher) -->
+  <a-box
+    id="ground"
+    class="cantap"
+    scale="1000 2 1000"
+    position="0 -0.99 0"
+    material="shader: shadow; transparent: true; opacity: 0.25"
+    shadow>
+  </a-box>
+</a-scene>
+
+</body>
+
+</html>

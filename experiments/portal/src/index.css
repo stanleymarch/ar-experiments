@@ -1,0 +1,78 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* --- HUD --- */
+.hud {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  color: white;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+}
+
+.hud-top {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.25em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.prompt {
+  position: absolute;
+  bottom: 16vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.5em;
+  text-align: center;
+  white-space: nowrap;
+  transition: opacity 0.6s ease;
+}
+
+.hint {
+  position: absolute;
+  bottom: 11vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.1em;
+  text-align: center;
+  white-space: nowrap;
+  transition: opacity 0.6s ease;
+}
+
+.gameover {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.4em;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: #ff4d5e;
+}
+
+.c-green { color: #3dff88; }
+.c-red { color: #ff3b4d; }
+
+.hidden { opacity: 0 !important; }
+
+/* --- Reality filter overlay --- */
+#vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 52%, rgba(40, 0, 95, 0.42) 100%);
+  transition: opacity 1.8s ease;
+}
