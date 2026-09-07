@@ -1,0 +1,62 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* --- HUD --- */
+.hud {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  color: white;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+}
+
+.hud-top {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.25em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+#resetBtn {
+  pointer-events: auto;
+  font: inherit;
+  font-size: 0.8em;
+  font-weight: 700;
+  color: var(--accent, #35f2ff);
+  background: rgba(10, 10, 22, 0.72);
+  border: 1px solid #35f2ff;
+  border-radius: 999px;
+  padding: 8px 18px;
+  cursor: pointer;
+}
+
+#resetBtn:active {
+  background: rgba(53, 242, 255, 0.25);
+}
+
+.prompt {
+  position: absolute;
+  bottom: 14vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.5em;
+  text-align: center;
+  white-space: nowrap;
+  transition: opacity 0.6s ease;
+}
+
+.hidden {
+  opacity: 0 !important;
+}

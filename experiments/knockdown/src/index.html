@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+  <title>AR Knockdown — Tap. Throw. Demolish.</title>
+  <meta name="description" content="Tap the floor to raise a tower of bricks, then pelt it with balls and watch it collapse onto your real floor.">
+
+  <script crossorigin="anonymous" src="./external/scripts/8frame-1.5.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/xrextras@1/dist/xrextras.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/landing-page@1/dist/landing-page.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" crossorigin="anonymous" async="true" data-preload-chunks="slam"></script>
+</head>
+
+<body>
+<script src="bundle.js"></script>
+
+<!-- HUD (over the AR view, pointer-events none except the button) -->
+<div class="hud">
+  <div class="hud-top">
+    <span id="scoreLabel">Down 0 / 15</span>
+    <button id="resetBtn" type="button">Reset</button>
+  </div>
+  <div id="promptText" class="prompt">Tap the floor to place the tower</div>
+</div>
+
+<a-scene
+  knockdown
+  physics-world
+  landing-page
+  xrextras-loading
+  xrextras-runtime-error
+  renderer="colorManagement:true; antialias:true"
+  xrweb="allowedDevices: any;">
+
+  <a-camera
+    id="camera"
+    position="0 1.6 3"
+    raycaster="objects: .cantap"
+    cursor="fuse: false; rayOrigin: mouse;">
+  </a-camera>
+
+  <a-light type="ambient" intensity="0.65"></a-light>
+  <a-entity
+    light="type: directional; intensity: 0.9; castShadow: true; shadowMapHeight: 1024; shadowMapWidth: 1024; target: #camera"
+    xrextras-attach="target: camera; offset: 6 10 3"
+    shadow>
+  </a-entity>
+
+  <!-- Tappable ground plane (also the shadow catcher); its top face is y = 0,
+       exactly where the physics floor is. -->
+  <a-box
+    id="ground"
+    class="cantap"
+    scale="1000 2 1000"
+    position="0 -1 0"
+    material="shader: shadow; transparent: true; opacity: 0.25"
+    shadow>
+  </a-box>
+</a-scene>
+
+</body>
+
+</html>
