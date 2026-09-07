@@ -1,15 +1,17 @@
 // knockdown.js — game flow: place a brick pyramid, then pelt it with balls.
 //
-// Taps are handled natively (no A-Frame cursor): on placement, the tap point
-// comes from XR8.XrController.hitTest() — a hit test against the tracked
-// real world, i.e. the actual 8th Wall SLAM floor. The physics floor and
-// the shadow catcher are then pinned to that plane's height, so simulation
-// and reality agree on where "the floor" is. For aiming throws at bricks, a
-// plain raycast against the virtual objects is used (hit tests see the real
-// world, not our bricks); on devices without XR8 the raycast doubles as the
-// placement fallback (desktop preview / tests).
+// Coordinates: the scene runs in XR8's SLAM world, where the detected real
+// floor IS the y = 0 plane (8th Wall ground-plane tracking). Placement is a
+// plain raycast against that plane + the virtual objects — stable and exact,
+// no per-frame drift. `scale: absolute` on xrweb keeps 1 unit = 1 metre, so
+// the tower's dimensions are real-world size.
+//
+// Taps are handled natively (no A-Frame cursor): a `pointerup` on the canvas
+// raycasts from the tracked camera. Before placement that hits the floor;
+// afterwards it hits the floor, a brick, or a ball — all valid throw targets.
 
 import {towerLayout, buildTower} from './tower'
+
 const BALL = {
   radius: 0.045, // ~9 cm across: tennis-ball sized at room scale
   mass: 0.25,    // 2.5x a brick: one clean hit reshapes the pyramid
@@ -22,9 +24,6 @@ const KNOCK_DISTANCE_SQ = 0.0064 // 8 cm from its spawn spot, or...
 const KNOCK_TILT = 0.72          // ...tipped further than ~44°: both count as fallen
 
 const UP = {x: 0, y: 1, z: 0} // reused scratch vector for tilt checks
-
-// Prefer real detected geometry over sparse feature points.
-const HIT_PRIORITY = {DETECTED_SURFACE: 0, ESTIMATED_SURFACE: 1, FEATURE_POINT: 2, UNSPECIFIED: 3}
 
 export const knockdownComponent = {
   init() {
@@ -61,8 +60,8 @@ export const knockdownComponent = {
   },
 
   onTap(event) {
-    const point = this.placed ? this.aimPoint(event) : this.floorPoint(event)
-    if (!point) return // tap hit neither the world nor anything virtual
+    const point = this.raycastVirtual(event)
+    if (!point) return // tap hit nothing (sky)
     if (!this.placed) {
       this.placeTower(point)
     } else {
@@ -70,25 +69,8 @@ export const knockdownComponent = {
     }
   },
 
-  // Where the tap lands in the tracked real world (8th Wall hit test).
-  hitTestWorld(event) {
-    if (!window.XR8 || !XR8.XrController || !XR8.XrController.hitTest) return null
-    const rect = event.target.getBoundingClientRect()
-    const x = (event.clientX - rect.left) / rect.width
-    const y = (event.clientY - rect.top) / rect.height
-    let hits
-    try {
-      hits = XR8.XrController.hitTest(x, y)
-    } catch (err) {
-      return null // engine not running (e.g. desktop preview)
-    }
-    if (!hits || !hits.length) return null
-    hits.sort((a, b) => (HIT_PRIORITY[a.type] ?? 9) - (HIT_PRIORITY[b.type] ?? 9))
-    const p = hits[0].position
-    return new THREE.Vector3(p.x, p.y, p.z)
-  },
-
-  // Where the tap lands on our virtual objects (ground, bricks, balls).
+  // Where the tap lands in world space: raycast from the tracked camera
+  // against the y=0 floor plane and the virtual objects (bricks, balls).
   raycastVirtual(event) {
     const camera = this.el.sceneEl.camera
     if (!camera) return null
@@ -104,24 +86,10 @@ export const knockdownComponent = {
     return hit ? hit.point.clone() : null
   },
 
-  // Placement target: the real floor per 8th Wall, raycast as a fallback.
-  floorPoint(event) {
-    return this.hitTestWorld(event) || this.raycastVirtual(event)
-  },
-
-  // Throw target: aim at virtual things first, else where the tap lands in
-  // the real world.
-  aimPoint(event) {
-    return this.raycastVirtual(event) || this.hitTestWorld(event)
-  },
-
   placeTower(point) {
     const camPos = new THREE.Vector3()
     this.camera.object3D.getWorldPosition(camPos)
     const yaw = Math.atan2(camPos.x - point.x, camPos.z - point.z) * 180 / Math.PI
-
-    // Pin simulation + shadow catcher to the tracked floor's height.
-    this.el.sceneEl.components['physics-world'].setFloorY(point.y)
 
     this.bricks = buildTower(this.el.sceneEl, point, yaw)
     // origins are captured lazily in tick(): object3D positions are not yet

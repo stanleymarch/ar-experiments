@@ -47,8 +47,8 @@ export const physicsWorldComponent = {
   init() {
     this.world = makeWorld()
 
-    // Static floor that starts at y = 0 and is re-anchored to the SLAM
-    // plane reported by the placement tap (setFloorY).
+    // Static floor at y = 0: XR8's world tracking puts the detected real
+    // ground plane exactly there, so physics and pixels agree.
     this.floorBody = new CANNON.Body({
       shape: new CANNON.Plane(),
       material: this.world.userData.materials.ground,
@@ -71,16 +71,6 @@ export const physicsWorldComponent = {
 
   material(name) {
     return this.world.userData.materials[name]
-  },
-
-  // Pin the physics floor (and the visual shadow catcher that matches it)
-  // to the height of the tracked real floor. All bodies wake so settling
-  // happens relative to the new anchor.
-  setFloorY(y) {
-    this.floorBody.position.set(0, y, 0)
-    const ground = document.getElementById('ground')
-    if (ground) ground.setAttribute('position', `0 ${y - 1} 0`) // box top = y
-    for (const {body} of this.bodies) body.wakeUp()
   },
 
   tick(_time, timeDelta) {

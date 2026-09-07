@@ -33,11 +33,11 @@
   xrextras-loading
   xrextras-runtime-error
   renderer="colorManagement:true; antialias:true"
-  xrweb="allowedDevices: any;">
+  xrweb="scale: absolute; allowedDevices: any;">
 
-  <!-- The knockdown component owns taps itself: XR8.XrController.hitTest()
-       against the tracked real floor, with a plain raycast fallback (and a
-       virtual-object raycast for aiming at bricks). -->
+  <!-- The knockdown component owns taps itself: a raycast from the tracked
+       camera against the y=0 floor plane (XR8's detected ground) and the
+       virtual objects. -->
   <a-camera id="camera" position="0 1.6 3"></a-camera>
 
   <a-light type="ambient" intensity="0.65"></a-light>
