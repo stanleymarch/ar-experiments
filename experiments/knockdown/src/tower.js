@@ -45,6 +45,8 @@ export function buildTower(sceneEl, origin, yaw) {
 
   return towerLayout().map((b) => {
     const el = document.createElement('a-box')
+    // a-box defaults to a 1x1x1 m cube; size the mesh to the collider.
+    el.setAttribute('geometry', `primitive: box; width: ${brick.w}; height: ${brick.h}; depth: ${brick.d}`)
     el.setAttribute('position', `
       ${origin.x + b.x * cos} ${origin.y + b.y} ${origin.z - b.x * sin}`)
     el.setAttribute('rotation', `0 ${yaw} 0`)

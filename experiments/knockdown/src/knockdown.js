@@ -108,6 +108,8 @@ export const knockdownComponent = {
     spawn.y = Math.max(spawn.y - 0.1, BALL.radius + 0.01)
 
     const el = document.createElement('a-sphere')
+    // a-sphere defaults to a 0.85 m radius; size the mesh to the collider.
+    el.setAttribute('geometry', `primitive: sphere; radius: ${BALL.radius}`)
     el.setAttribute('position', `${spawn.x} ${spawn.y} ${spawn.z}`)
     el.setAttribute('material', `color: ${BALL.color}; roughness: 0.35; metalness: 0.05`)
     el.setAttribute('shadow', '')
