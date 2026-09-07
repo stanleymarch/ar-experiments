@@ -31,6 +31,7 @@ export const cubesComponent = {
     this.scoreEl = document.getElementById('scoreLabel')
     this.livesEl = document.getElementById('livesLabel')
     this.gameOverEl = document.getElementById('gameOver')
+    this.dbgEl = document.getElementById('dbgLine')
 
     // The portal entity is only ever created by a floor tap, so that moment is
     // exactly when the round begins. (A-Frame defers component init until after
@@ -145,6 +146,10 @@ export const cubesComponent = {
   tick(_time, timeDelta) {
     if (!this.active) return
 
+    if (this.dbgEl) {
+      this.dbgEl.textContent = `cubes=${this.items.length} t=${Math.round(this.timer)}ms lives=${this.lives} score=${this.score}`
+    }
+
     const dt = timeDelta / 1000
     this.timer += timeDelta
     if (this.timer >= this.data.interval) {
@@ -154,8 +159,6 @@ export const cubesComponent = {
 
     const now = performance.now()
     const cam = this.camWorld(new THREE.Vector3())
-    const camFwd = new THREE.Vector3()
-    document.getElementById('camera').object3D.getWorldDirection(camFwd)
 
     const tmp = new THREE.Vector3()
     for (let i = this.items.length - 1; i >= 0; i--) {
@@ -188,10 +191,8 @@ export const cubesComponent = {
         continue
       }
 
-      // Expired or flew behind the camera.
-      tmp.subVectors(c.pos, cam)
-      const behind = tmp.dot(camFwd) < -1.2
-      if (now - c.born > this.data.maxAge || behind) {
+      // Expired.
+      if (now - c.born > this.data.maxAge) {
         this.removeItem(c)
       }
     }

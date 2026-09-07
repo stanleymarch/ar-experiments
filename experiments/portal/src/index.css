@@ -66,6 +66,16 @@ html, body {
 
 .hidden { opacity: 0 !important; }
 
+.dbg {
+  position: absolute;
+  bottom: 4vh;
+  right: 16px;
+  font-size: 0.78em;
+  color: #7fd9ff;
+  text-align: right;
+  white-space: pre;
+}
+
 /* --- Reality filter overlay --- */
 #vignette {
   position: absolute;
