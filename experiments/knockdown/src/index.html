@@ -35,12 +35,10 @@
   renderer="colorManagement:true; antialias:true"
   xrweb="allowedDevices: any;">
 
-  <a-camera
-    id="camera"
-    position="0 1.6 3"
-    raycaster="objects: .cantap"
-    cursor="fuse: false; rayOrigin: mouse;">
-  </a-camera>
+  <!-- The knockdown component owns taps itself: XR8.XrController.hitTest()
+       against the tracked real floor, with a plain raycast fallback (and a
+       virtual-object raycast for aiming at bricks). -->
+  <a-camera id="camera" position="0 1.6 3"></a-camera>
 
   <a-light type="ambient" intensity="0.65"></a-light>
   <a-entity
@@ -49,11 +47,10 @@
     shadow>
   </a-entity>
 
-  <!-- Tappable ground plane (also the shadow catcher); its top face is y = 0,
-       exactly where the physics floor is. -->
+  <!-- Shadow catcher; the knockdown component re-anchors its top face (and
+       the physics floor) to the SLAM plane found by the placement tap. -->
   <a-box
     id="ground"
-    class="cantap"
     scale="1000 2 1000"
     position="0 -1 0"
     material="shader: shadow; transparent: true; opacity: 0.25"

@@ -8,12 +8,14 @@
 
 import * as CANNON from 'cannon-es'
 
-// Tuned so the brick tower sleeps quietly until a ball hits it.
+// Tuned so the brick tower sleeps quietly until a ball hits it, and bricks
+// rest on each other instead of sinking into each other: stiff contact
+// equations + plenty of solver iterations.
 export function makeWorld() {
   const world = new CANNON.World({gravity: new CANNON.Vec3(0, -9.82, 0)})
   world.broadphase = new CANNON.SAPBroadphase(world)
   world.allowSleep = true
-  world.solver.iterations = 12
+  world.solver.iterations = 20
 
   const materials = {
     ground: new CANNON.Material('ground'),
@@ -21,11 +23,18 @@ export function makeWorld() {
     ball: new CANNON.Material('ball'),
   }
 
-  const contact = (a, b, friction, restitution) =>
-    world.addContactMaterial(new CANNON.ContactMaterial(a, b, {friction, restitution}))
+  const contact = (a, b, friction, restitution, stiffness = 1e7, relaxation = 3) =>
+    world.addContactMaterial(new CANNON.ContactMaterial(a, b, {
+      friction,
+      restitution,
+      contactEquationStiffness: stiffness,
+      contactEquationRelaxation: relaxation,
+    }))
 
-  contact(materials.brick, materials.brick, 0.6, 0.01)  // the stack stays put
-  contact(materials.brick, materials.ground, 0.55, 0.05) // bricks settle, don't skate
+  // Crisp stacks: near-inelastic, very stiff brick contacts (1e9 keeps
+  // gravity-driven penetration to well under a millimetre).
+  contact(materials.brick, materials.brick, 0.7, 0.001, 1e9, 3)
+  contact(materials.brick, materials.ground, 0.65, 0.001, 1e9, 3)
   contact(materials.ball, materials.ground, 0.35, 0.55) // balls bounce and roll
   contact(materials.ball, materials.brick, 0.3, 0.3)    // satisfying impacts
 
@@ -34,19 +43,18 @@ export function makeWorld() {
   world.userData = {materials}
   return world
 }
-
 export const physicsWorldComponent = {
   init() {
     this.world = makeWorld()
 
-    // Static floor matching the visual shadow-catcher ground (its top face
-    // sits at y = 0; physics and pixels agree on where the real floor is).
-    const floor = new CANNON.Body({
+    // Static floor that starts at y = 0 and is re-anchored to the SLAM
+    // plane reported by the placement tap (setFloorY).
+    this.floorBody = new CANNON.Body({
       shape: new CANNON.Plane(),
       material: this.world.userData.materials.ground,
     })
-    floor.quaternion.setFromEuler(-Math.PI / 2, 0, 0)
-    this.world.addBody(floor)
+    this.floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0)
+    this.world.addBody(this.floorBody)
 
     this.bodies = []
   },
@@ -63,6 +71,16 @@ export const physicsWorldComponent = {
 
   material(name) {
     return this.world.userData.materials[name]
+  },
+
+  // Pin the physics floor (and the visual shadow catcher that matches it)
+  // to the height of the tracked real floor. All bodies wake so settling
+  // happens relative to the new anchor.
+  setFloorY(y) {
+    this.floorBody.position.set(0, y, 0)
+    const ground = document.getElementById('ground')
+    if (ground) ground.setAttribute('position', `0 ${y - 1} 0`) // box top = y
+    for (const {body} of this.bodies) body.wakeUp()
   },
 
   tick(_time, timeDelta) {
