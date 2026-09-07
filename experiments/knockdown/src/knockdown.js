@@ -103,9 +103,24 @@ export const knockdownComponent = {
     const camPos = new THREE.Vector3()
     this.camera.object3D.getWorldPosition(camPos)
 
-    const dir = point.clone().sub(camPos).normalize()
-    const spawn = camPos.clone().addScaledVector(dir, 0.3)
+    const dir = point.clone().sub(camPos)
+    // A tap whose aim point is (nearly) the camera would normalize a zero
+    // vector into NaN and poison the physics world — drop such taps.
+    if (dir.lengthSq() < 0.01) return
+    dir.normalize()
+
+    // Spawn in front of the camera, but not inside a brick: a deep
+    // penetration at launch blows up the solver.
+    let spawn = camPos.clone().addScaledVector(dir, 0.3)
     spawn.y = Math.max(spawn.y - 0.1, BALL.radius + 0.01)
+    for (const b of this.bricks) {
+      const c = b.object3D.position
+      if (Math.hypot(spawn.x - c.x, spawn.y - c.y, spawn.z - c.z) < BALL.radius + 0.08) {
+        spawn = camPos.clone().addScaledVector(dir, 0.15)
+        spawn.y = Math.max(spawn.y - 0.1, BALL.radius + 0.01)
+        break
+      }
+    }
 
     const el = document.createElement('a-sphere')
     // a-sphere defaults to a 0.85 m radius; size the mesh to the collider.

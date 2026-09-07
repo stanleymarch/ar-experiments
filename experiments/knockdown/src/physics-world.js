@@ -75,11 +75,39 @@ export const physicsWorldComponent = {
 
   tick(_time, timeDelta) {
     const dt = Math.min(timeDelta / 1000, 0.05)
-    this.world.step(1 / 120, dt, 10)
+    try {
+      this.world.step(1 / 120, dt, 10)
+    } catch (err) {
+      this.purgeNonFinite()
+      return
+    }
+    const bad = []
     for (const {el, body} of this.bodies) {
       if (body.sleepState === CANNON.Body.SLEEPING) continue
-      el.object3D.position.copy(body.position)
+      const p = body.position
+      if (!Number.isFinite(p.x + p.y + p.z)) {
+        // A non-finite body will poison every contact it touches and blank
+        // the whole scene; drop it before it spreads.
+        bad.push({el, body})
+        continue
+      }
+      el.object3D.position.copy(p)
       el.object3D.quaternion.copy(body.quaternion)
+    }
+    for (const {el, body} of bad) {
+      this.unregister(body)
+      if (el.parentNode) el.parentNode.removeChild(el)
+    }
+  },
+
+  // Remove any body whose state went NaN (degenerate contact, spawn overlap,
+  // etc.) so the rest of the world keeps simulating instead of vanishing.
+  purgeNonFinite() {
+    const bad = this.bodies.filter(({body}) =>
+      !Number.isFinite(body.position.x + body.position.y + body.position.z))
+    for (const {el, body} of bad) {
+      this.unregister(body)
+      if (el.parentNode) el.parentNode.removeChild(el)
     }
   },
 }
