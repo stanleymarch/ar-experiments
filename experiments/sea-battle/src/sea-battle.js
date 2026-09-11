@@ -15,14 +15,23 @@
 // реальный пол — плоскость y = 0.
 
 // --- Параметры боя (в локальных координатах акватории) ---------------------
+// --- Акватория ---------------------------------------------------------------
+// Точка постановки — по тапу, но геометрия всегда считается от игрока:
+// вода начинается чуть впереди ног, торпеда выходит из-под ног, а линии
+// кораблей раскладываются долями глубины — флот читается на любом
+// расстоянии постановки.
 const SEA = {
-  width: 1.8,        // ширина моря по X
-  nearZ: 0.9,        // ближний край (к игроку)
-  farZ: -1.5,        // дальний край (горизонт)
+  width: 1.8,             // ширина моря по X
+  farZ: -0.9,             // дальний край относительно точки постановки
+  waterInset: 0.5,        // вода начинается в 0.5 м перед игроком
+  launchInset: 0.3,       // торпеда выходит в 0.3 м перед игроком
+  anchorMin: 1.2,         // не ставим ближе: море не влезет в кадр
+  anchorMax: 2.4,         // не ставим дальше: корабли станут нечитаемы
+  laneFractions: [0.78, 0.55, 0.32], // доля глубины от дальнего края
   lanes: [
-    {z: 0.15, speed: 0.11, dir: 1, ships: ['small', 'small', 'big']},
-    {z: -0.30, speed: 0.075, dir: -1, ships: ['mid', 'mid', 'small']},
-    {z: -0.75, speed: 0.05, dir: 1, ships: ['big', 'mid']},
+    {speed: 0.11, dir: 1, ships: ['small', 'small', 'big']},
+    {speed: 0.075, dir: -1, ships: ['mid', 'mid', 'small']},
+    {speed: 0.05, dir: 1, ships: ['big', 'mid']},
   ],
 }
 
@@ -33,10 +42,10 @@ const SHIP_TYPES = {
 }
 
 const TORPEDO = {
-  speed: 0.55,       // м/с по поверхности
+  speed: 0.8,        // м/с по поверхности: от ног игрока до горизонта
   radius: 0.02,      // допуск попадания (расширение AABB корпуса)
   trailEvery: 90,    // мс между «лампочками» хвоста
-  maxRun: 6,         // с: страховка от вечного бегуна
+  maxRun: 8,         // с: страховка от вечного бегуна
 }
 
 const LAUNCHES = 10  // пусков за игру — как за 15 копеек
@@ -88,6 +97,7 @@ export const seaBattleComponent = {
 
     this.raycaster = new THREE.Raycaster()
     this.root = null
+    this.lanes = []
     this.shipEls = []     // a-entity с ship-hull
     this.torpedoes = []   // {el, vel(THREE.Vector3), born, lastTrail}
     this.fx = []
@@ -148,21 +158,40 @@ export const seaBattleComponent = {
   },
 
   // --- Развертывание акватории ------------------------------------------------
+  // Игрок всегда оказывается в локальном z = anchorDist: туда указывает +Z.
+  // Дистанцию постановки зажимаем, чтобы флот был в кадре и читался.
   deploySea(point) {
     const camPos = new THREE.Vector3()
     this.camera.object3D.getWorldPosition(camPos)
-    const yaw = Math.atan2(camPos.x - point.x, camPos.z - point.z) * 180 / Math.PI
+    const dx = camPos.x - point.x
+    const dz = camPos.z - point.z
+    const dist = Math.hypot(dx, dz)
+    if (dist < 0.05) return // тап ровно под ногами — ставить некуда
+
+    const yaw = Math.atan2(dx, dz) * 180 / Math.PI
+    const anchorDist = Math.min(Math.max(dist, SEA.anchorMin), SEA.anchorMax)
+    const ax = camPos.x - (dx / dist) * anchorDist
+    const az = camPos.z - (dz / dist) * anchorDist
 
     this.root = document.createElement('a-entity')
-    this.root.setAttribute('position', `${point.x} 0 ${point.z}`)
+    this.root.setAttribute('position', `${ax} 0 ${az}`)
     this.root.setAttribute('rotation', `0 ${yaw} 0`)
     this.el.sceneEl.appendChild(this.root)
+
+    // Геометрия от игрока: глубина и линии кораблей.
+    this.playerZ = anchorDist
+    this.waterNearZ = this.playerZ - SEA.waterInset
+    this.depth = this.waterNearZ - SEA.farZ
+    this.lanes = SEA.lanes.map((lane, i) => ({
+      ...lane,
+      z: SEA.farZ + SEA.laneFractions[i] * this.depth,
+    }))
 
     this.buildSea()
 
     // «Опустили монету» — корабли сразу пошли, как на цепи автомата.
     this.shipEls = []
-    for (const lane of SEA.lanes) this.populateLane(lane)
+    for (const lane of this.lanes) this.populateLane(lane)
 
     this.placed = true
     this.prompt.classList.add('hidden')
@@ -170,15 +199,19 @@ export const seaBattleComponent = {
   },
 
   buildSea() {
-    const depth = SEA.nearZ - SEA.farZ
-    const centerZ = (SEA.nearZ + SEA.farZ) / 2
+    const centerZ = (this.waterNearZ + SEA.farZ) / 2
 
     // Мягкая процедурная поверхность: без прямоугольной кромки и без
     // z-fighting с shadow-plane реального пола.
     const water = document.createElement('a-entity')
     water.setAttribute('position', `0 0.025 ${centerZ}`)
-    water.setAttribute('sea-surface', `width: ${SEA.width}; depth: ${depth}`)
+    water.setAttribute('sea-surface', `width: ${SEA.width}; depth: ${this.depth}`)
     this.root.appendChild(water)
+  },
+
+  // Ближайшая по глубине линия — по ней берём скорость и курс для корабля.
+  laneAt(z) {
+    return this.lanes.reduce((b, l) => Math.abs(l.z - z) < Math.abs(b.z - z) ? l : b)
   },
 
   // Корабли «на цепи»: по слоту на lanes.ships, равномерно по ширине моря.
@@ -201,21 +234,20 @@ export const seaBattleComponent = {
     el.setAttribute('ship-hull', `decks: ${spec.decks}; name: ${spec.name}`)
     el.classList.add('ship')
     this.root.appendChild(el)
-    el.addEventListener('loaded', () => { el.dataset.laneZ = lane.z })
     this.shipEls.push(el)
     return el
   },
 
   // --- Пуск торпеды -------------------------------------------------------------
-  // Трасса: от точки у игрока (ближний край, центр) по поверхности к курсу,
-  // заданному тапом. Наводиться нужно с упреждением — корабли идут.
+  // Трасса выходит из-под ног игрока — как из лодки, а не из точки постановки
+  // акватории. Курс задаётся тапом, упреждение — за счёт хода кораблей.
   launchTorpedo(targetWorld) {
     this.launched++
     this.updateHud()
     this.beeper.launch()
 
     const local = this.root.object3D.worldToLocal(targetWorld.clone())
-    const origin = new THREE.Vector3(0, 0.015, SEA.nearZ - 0.05)
+    const origin = new THREE.Vector3(0, 0.015, this.playerZ - SEA.launchInset)
     const dir = new THREE.Vector3(local.x, 0, local.z).sub(
       new THREE.Vector3(origin.x, 0, origin.z))
     // Тап «за спину» не разворачивает торпеду: ведём вперёд по Z.
@@ -302,9 +334,7 @@ export const seaBattleComponent = {
       const pos = el.object3D.position
       const typeKeys = Object.keys(SHIP_TYPES)
       const spec = SHIP_TYPES[typeKeys[Math.floor(Math.random() * typeKeys.length)]]
-      const laneZ = pos.z
-      const lane = SEA.lanes.reduce((best, l) =>
-        Math.abs(l.z - laneZ) < Math.abs(best.z - laneZ) ? l : best)
+      const lane = this.laneAt(pos.z)
       const entryX = lane.dir > 0 ? -SEA.width / 2 - 0.05 : SEA.width / 2 + 0.05
       const i = this.shipEls.indexOf(el)
       if (i >= 0) this.shipEls.splice(i, 1)
@@ -345,6 +375,7 @@ export const seaBattleComponent = {
     this.torpedoes = []
     this.fx = []
     this.shipEls = []
+    this.lanes = []
     this.root = null
     this.placed = false
     this.over = false
@@ -374,9 +405,7 @@ export const seaBattleComponent = {
     // с противоположной стороны, как замкнутая цепь автомата.
     for (const el of this.shipEls) {
       if (el.isSunk) continue
-      const laneZ = el.object3D.position.z
-      const lane = SEA.lanes.reduce((best, l) =>
-        Math.abs(l.z - laneZ) < Math.abs(best.z - laneZ) ? l : best)
+      const lane = this.laneAt(el.object3D.position.z)
       const p = el.object3D.position
       p.x += lane.speed * lane.dir * dt
       if (lane.dir > 0 && p.x > SEA.width / 2 + 0.05) p.x = -SEA.width / 2 - 0.05
