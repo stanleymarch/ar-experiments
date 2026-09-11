@@ -173,28 +173,12 @@ export const seaBattleComponent = {
     const depth = SEA.nearZ - SEA.farZ
     const centerZ = (SEA.nearZ + SEA.farZ) / 2
 
-    // Тёмная вода — «стекло с рисунком моря».
-    const water = document.createElement('a-plane')
-    water.setAttribute('rotation', '-90 0 0')
-    water.setAttribute('position', `0 0 ${centerZ}`)
-    water.setAttribute('scale', `${SEA.width} ${depth} 1`)
-    water.setAttribute('material', `
-      color: #0d2440;
-      transparent: true; opacity: 0.85;
-      roughness: 0.3; metalness: 0.2`)
+    // Мягкая процедурная поверхность: без прямоугольной кромки и без
+    // z-fighting с shadow-plane реального пола.
+    const water = document.createElement('a-entity')
+    water.setAttribute('position', `0 0.025 ${centerZ}`)
+    water.setAttribute('sea-surface', `width: ${SEA.width}; depth: ${depth}`)
     this.root.appendChild(water)
-
-    // Волновые полосы — светлые штрихи по морю, как гравировка на стекле.
-    for (let i = 0; i < 7; i++) {
-      const z = SEA.nearZ - 0.15 - i * (depth - 0.3) / 6
-      const wave = document.createElement('a-box')
-      wave.setAttribute('position', `0 0.002 ${z}`)
-      wave.setAttribute('width', SEA.width * (0.5 + 0.4 * Math.random()))
-      wave.setAttribute('height', '0.001')
-      wave.setAttribute('depth', '0.012')
-      wave.setAttribute('material', 'color: #4d7ea8; transparent: true; opacity: 0.3')
-      this.root.appendChild(wave)
-    }
   },
 
   // Корабли «на цепи»: по слоту на lanes.ships, равномерно по ширине моря.
@@ -209,6 +193,9 @@ export const seaBattleComponent = {
   spawnShip(spec, x, lane) {
     const el = document.createElement('a-entity')
     el.setAttribute('position', `${x} 0 ${lane.z}`)
+    // A-Frame применяет атрибут position асинхронно, а tick уже двигает
+    // object3D — выставляем обе точки сразу, чтобы не было скачка.
+    el.object3D.position.set(x, 0, lane.z)
     // +X — нос; корабль смотрит по ходу движения.
     el.setAttribute('rotation', `0 ${lane.dir > 0 ? 0 : 180} 0`)
     el.setAttribute('ship-hull', `decks: ${spec.decks}; name: ${spec.name}`)
@@ -237,6 +224,8 @@ export const seaBattleComponent = {
 
     const el = document.createElement('a-entity')
     el.setAttribute('position', `${origin.x} ${origin.y} ${origin.z}`)
+    // Тот же синхронный старт: первый tick идёт из точки пуска, не из нуля.
+    el.object3D.position.copy(origin)
     // Цилиндр-трассер лежит по X; доворачиваем на курс.
     const heading = Math.atan2(dir.z, dir.x)
     el.setAttribute('torpedo', '')

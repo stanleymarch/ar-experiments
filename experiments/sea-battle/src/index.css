@@ -1,24 +1,28 @@
-/* «Морской бой» — эстетика советского перископного автомата: тёмная оптика
-   перископа, янтарные механические счётчики, красная киноварь кнопки «Пуск»,
-   зелёные лампы трасс торпед. */
+/* «Морской бой» — панель советского перископного автомата поверх AR. */
 
 @import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');
 
 :root {
-  --ink: #0e1626;        /* тёмная латынь корпуса */
-  --panel: #12233d;      /* синее стекло панели */
-  --amber: #ffb64c;      /* янтарные цифры счётчиков */
-  --red: #e8452c;        /* киноварь флага и кнопки */
-  --cream: #f3e7cf;      /* известковая эмаль */
-  --grid: #7fb2d9;       /* карандашная синь */
-  --lamp: #7dff9a;       /* зелёная лампа «ТОРПЕДИРОВАНО» */
+  --ink: #0e1626;
+  --panel: #12233d;
+  --amber: #ffb64c;
+  --red: #e8452c;
+  --cream: #f3e7cf;
+  --grid: #7fb2d9;
+  --lamp: #7dff9a;
 }
 
-html, body {
+* { box-sizing: border-box; }
+
+html,
+body {
+  width: 100%;
+  height: 100%;
   margin: 0;
   padding: 0;
-  height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
   font-family: 'Russo One', 'Arial Black', 'Segoe UI', sans-serif;
 }
 
@@ -26,6 +30,7 @@ html, body {
   position: absolute;
   inset: 0;
   z-index: 10;
+  min-width: 0;
   pointer-events: none;
   color: var(--cream);
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.85), 0 0 12px rgba(0, 0, 0, 0.5);
@@ -33,41 +38,46 @@ html, body {
 
 .hud-top {
   position: absolute;
-  top: max(12px, env(safe-area-inset-top));
-  left: 14px;
-  right: 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.98em;
-  letter-spacing: 0.06em;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(8px, env(safe-area-inset-left));
+  right: max(8px, env(safe-area-inset-right));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: clamp(4px, 1.6vw, 10px);
+  font-size: clamp(10px, 3vw, 15px);
+  letter-spacing: clamp(0, 0.5vw, 0.06em);
 }
 
 .counter {
-  background: var(--panel);
-  border: 2px solid rgba(127, 178, 217, 0.55);
-  border-radius: 6px;
-  padding: 6px 11px;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(5px, 1.6vw, 8px) clamp(4px, 2vw, 11px);
+  overflow: hidden;
   color: var(--amber);
   white-space: nowrap;
-}
-
-.hud-top .counter:last-of-type {
-  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  background: rgba(18, 35, 61, 0.9);
+  border: 2px solid rgba(127, 178, 217, 0.55);
+  border-radius: 6px;
 }
 
 .btn {
+  min-width: 0;
+  padding: clamp(6px, 1.8vw, 9px) clamp(7px, 2.5vw, 13px);
   pointer-events: auto;
-  font: inherit;
-  font-size: 0.72em;
-  letter-spacing: 0.08em;
+  cursor: pointer;
   color: var(--cream);
+  font: inherit;
+  font-size: clamp(9px, 2.5vw, 12px);
+  line-height: 1;
+  letter-spacing: 0.04em;
   background: var(--red);
   border: 2px solid #8f2415;
   border-radius: 6px;
-  padding: 8px 12px;
   box-shadow: 0 3px 0 #8f2415;
-  cursor: pointer;
 }
 
 .btn:active {
@@ -75,52 +85,58 @@ html, body {
   box-shadow: 0 1px 0 #8f2415;
 }
 
-.prompt {
+.prompt,
+.hint {
   position: absolute;
-  bottom: 13vh;
   left: 50%;
+  width: min(440px, calc(100vw - max(24px, env(safe-area-inset-left)) - max(24px, env(safe-area-inset-right))));
   transform: translateX(-50%);
-  font-size: 1.2em;
-  letter-spacing: 0.08em;
-  color: var(--cream);
-  background: rgba(14, 22, 38, 0.78);
-  border: 2px solid rgba(255, 182, 76, 0.7);
-  border-radius: 8px;
-  padding: 12px 20px;
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
   transition: opacity 0.5s ease;
 }
 
+.prompt {
+  bottom: max(12vh, calc(env(safe-area-inset-bottom) + 62px));
+  padding: clamp(9px, 2.8vw, 13px) clamp(11px, 4vw, 20px);
+  color: var(--cream);
+  font-size: clamp(12px, 3.7vw, 19px);
+  line-height: 1.35;
+  letter-spacing: clamp(0.03em, 0.8vw, 0.08em);
+  background: rgba(14, 22, 38, 0.82);
+  border: 2px solid rgba(255, 182, 76, 0.7);
+  border-radius: 8px;
+}
+
 .hint {
-  position: absolute;
-  bottom: 8.5vh;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.9em;
-  letter-spacing: 0.05em;
+  bottom: max(5.5vh, calc(env(safe-area-inset-bottom) + 16px));
   color: var(--grid);
-  text-align: center;
-  white-space: nowrap;
-  transition: opacity 0.5s ease;
+  font-size: clamp(10px, 3vw, 14px);
+  line-height: 1.35;
+  letter-spacing: clamp(0.02em, 0.5vw, 0.05em);
 }
 
 .hint b { color: var(--amber); }
 
-/* Лампа-табло «ТОРПЕДИРОВАНО»: зелёная, мигает как сигнальная */
+/* Лампа «ТОРПЕДИРОВАНО»: всегда уже экрана, даже на 320 px. */
 .torpedoed {
   position: absolute;
-  top: 22%;
+  top: clamp(76px, 18vh, 150px);
   left: 50%;
-  transform: translate(-50%, 0) rotate(-1.5deg);
-  font-size: 1.5em;
-  letter-spacing: 0.14em;
+  max-width: calc(100vw - 24px);
+  padding: clamp(7px, 2.5vw, 11px) clamp(10px, 4vw, 22px);
+  overflow: hidden;
   color: var(--lamp);
-  background: rgba(10, 30, 16, 0.85);
+  font-size: clamp(13px, 4vw, 23px);
+  line-height: 1.1;
+  letter-spacing: clamp(0.04em, 1vw, 0.14em);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: rgba(10, 30, 16, 0.88);
   border: 3px solid var(--lamp);
   border-radius: 8px;
-  padding: 10px 22px;
   box-shadow: 0 0 24px rgba(125, 255, 154, 0.45), inset 0 0 18px rgba(125, 255, 154, 0.25);
+  transform: translateX(-50%) rotate(-1.5deg);
   animation: lamp-blink 0.28s steps(2, jump-none) infinite;
 }
 
@@ -129,66 +145,111 @@ html, body {
   100% { opacity: 0.35; }
 }
 
-/* Призовая вспышка: звезда и янтарное табло */
-.prize {
+.prize,
+.gameover {
   position: absolute;
-  top: 34%;
+  top: 42%;
   left: 50%;
-  transform: translate(-50%, -50%) rotate(-1.5deg);
-  font-size: 1.3em;
-  letter-spacing: 0.1em;
-  color: var(--amber);
-  background: rgba(14, 22, 38, 0.92);
+  width: min(420px, calc(100vw - 28px));
+  padding: clamp(18px, 5vw, 28px);
+  text-align: center;
+  background: rgba(14, 22, 38, 0.94);
   border: 3px solid var(--amber);
   border-radius: 10px;
-  padding: 20px 28px;
-  text-align: center;
+  transform: translate(-50%, -50%) rotate(-1.5deg);
+}
+
+.prize {
+  color: var(--amber);
+  font-size: clamp(14px, 4vw, 21px);
+  line-height: 1.35;
+  letter-spacing: clamp(0.04em, 1vw, 0.1em);
   box-shadow: 0 0 30px rgba(255, 182, 76, 0.4);
 }
 
 .prize-star {
   display: block;
-  font-size: 1.8em;
-  color: var(--red);
-  text-shadow: 0 0 18px rgba(232, 69, 44, 0.8);
   margin-bottom: 6px;
+  color: var(--red);
+  font-size: clamp(24px, 8vw, 38px);
+  text-shadow: 0 0 18px rgba(232, 69, 44, 0.8);
 }
 
 .gameover {
-  position: absolute;
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(-1.5deg);
-  background: rgba(14, 22, 38, 0.92);
-  border: 3px solid var(--amber);
-  border-radius: 10px;
-  padding: 26px 34px;
-  text-align: center;
   box-shadow: 0 0 0 4px rgba(14, 22, 38, 0.6), 0 18px 40px rgba(0, 0, 0, 0.55);
 }
 
 .gameover-title {
-  font-size: 2.1em;
-  letter-spacing: 0.1em;
   color: var(--amber);
+  font-size: clamp(23px, 7vw, 34px);
+  line-height: 1.15;
+  letter-spacing: clamp(0.04em, 1vw, 0.1em);
 }
 
 .gameover-sub {
   margin-top: 8px;
-  font-size: 1.05em;
   color: var(--grid);
-  letter-spacing: 0.06em;
+  font-size: clamp(13px, 3.6vw, 17px);
+  line-height: 1.35;
+  letter-spacing: 0.04em;
 }
 
 .gameover-cta {
-  margin-top: 14px;
-  font-size: 0.9em;
-  color: var(--cream);
-  background: var(--red);
   display: inline-block;
+  max-width: 100%;
+  margin-top: 14px;
+  padding: 7px 14px;
+  color: var(--cream);
+  font-size: clamp(11px, 3vw, 15px);
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  background: var(--red);
   border-radius: 999px;
-  padding: 6px 16px;
-  letter-spacing: 0.07em;
 }
 
 .hidden { opacity: 0 !important; }
+
+/* Низкие телефоны и landscape: панели не закрывают центр прицела. */
+@media (max-height: 620px) {
+  .hud-top { top: max(5px, env(safe-area-inset-top)); }
+
+  .prompt {
+    bottom: max(52px, calc(env(safe-area-inset-bottom) + 46px));
+    padding-block: 7px;
+    font-size: clamp(11px, 3vw, 15px);
+  }
+
+  .hint {
+    bottom: max(8px, env(safe-area-inset-bottom));
+    font-size: clamp(9px, 2.4vw, 12px);
+  }
+
+  .torpedoed { top: 62px; }
+
+  .prize,
+  .gameover {
+    top: 50%;
+    max-height: calc(100vh - 100px);
+    padding: 14px 20px;
+  }
+
+  .gameover-cta { margin-top: 8px; }
+}
+
+@media (max-width: 350px) {
+  .hud-top {
+    left: max(5px, env(safe-area-inset-left));
+    right: max(5px, env(safe-area-inset-right));
+    gap: 3px;
+  }
+
+  .counter {
+    padding-inline: 3px;
+    border-width: 1px;
+  }
+
+  .btn {
+    padding-inline: 6px;
+    border-width: 1px;
+  }
+}
