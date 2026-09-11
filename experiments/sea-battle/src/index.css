@@ -1,0 +1,194 @@
+/* «Морской бой» — эстетика советского перископного автомата: тёмная оптика
+   перископа, янтарные механические счётчики, красная киноварь кнопки «Пуск»,
+   зелёные лампы трасс торпед. */
+
+@import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');
+
+:root {
+  --ink: #0e1626;        /* тёмная латынь корпуса */
+  --panel: #12233d;      /* синее стекло панели */
+  --amber: #ffb64c;      /* янтарные цифры счётчиков */
+  --red: #e8452c;        /* киноварь флага и кнопки */
+  --cream: #f3e7cf;      /* известковая эмаль */
+  --grid: #7fb2d9;       /* карандашная синь */
+  --lamp: #7dff9a;       /* зелёная лампа «ТОРПЕДИРОВАНО» */
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Russo One', 'Arial Black', 'Segoe UI', sans-serif;
+}
+
+.hud {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  color: var(--cream);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.85), 0 0 12px rgba(0, 0, 0, 0.5);
+}
+
+.hud-top {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.98em;
+  letter-spacing: 0.06em;
+}
+
+.counter {
+  background: var(--panel);
+  border: 2px solid rgba(127, 178, 217, 0.55);
+  border-radius: 6px;
+  padding: 6px 11px;
+  color: var(--amber);
+  white-space: nowrap;
+}
+
+.hud-top .counter:last-of-type {
+  margin-left: auto;
+}
+
+.btn {
+  pointer-events: auto;
+  font: inherit;
+  font-size: 0.72em;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+  background: var(--red);
+  border: 2px solid #8f2415;
+  border-radius: 6px;
+  padding: 8px 12px;
+  box-shadow: 0 3px 0 #8f2415;
+  cursor: pointer;
+}
+
+.btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #8f2415;
+}
+
+.prompt {
+  position: absolute;
+  bottom: 13vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2em;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+  background: rgba(14, 22, 38, 0.78);
+  border: 2px solid rgba(255, 182, 76, 0.7);
+  border-radius: 8px;
+  padding: 12px 20px;
+  text-align: center;
+  white-space: nowrap;
+  transition: opacity 0.5s ease;
+}
+
+.hint {
+  position: absolute;
+  bottom: 8.5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.9em;
+  letter-spacing: 0.05em;
+  color: var(--grid);
+  text-align: center;
+  white-space: nowrap;
+  transition: opacity 0.5s ease;
+}
+
+.hint b { color: var(--amber); }
+
+/* Лампа-табло «ТОРПЕДИРОВАНО»: зелёная, мигает как сигнальная */
+.torpedoed {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, 0) rotate(-1.5deg);
+  font-size: 1.5em;
+  letter-spacing: 0.14em;
+  color: var(--lamp);
+  background: rgba(10, 30, 16, 0.85);
+  border: 3px solid var(--lamp);
+  border-radius: 8px;
+  padding: 10px 22px;
+  box-shadow: 0 0 24px rgba(125, 255, 154, 0.45), inset 0 0 18px rgba(125, 255, 154, 0.25);
+  animation: lamp-blink 0.28s steps(2, jump-none) infinite;
+}
+
+@keyframes lamp-blink {
+  0% { opacity: 1; }
+  100% { opacity: 0.35; }
+}
+
+/* Призовая вспышка: звезда и янтарное табло */
+.prize {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-1.5deg);
+  font-size: 1.3em;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+  background: rgba(14, 22, 38, 0.92);
+  border: 3px solid var(--amber);
+  border-radius: 10px;
+  padding: 20px 28px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(255, 182, 76, 0.4);
+}
+
+.prize-star {
+  display: block;
+  font-size: 1.8em;
+  color: var(--red);
+  text-shadow: 0 0 18px rgba(232, 69, 44, 0.8);
+  margin-bottom: 6px;
+}
+
+.gameover {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-1.5deg);
+  background: rgba(14, 22, 38, 0.92);
+  border: 3px solid var(--amber);
+  border-radius: 10px;
+  padding: 26px 34px;
+  text-align: center;
+  box-shadow: 0 0 0 4px rgba(14, 22, 38, 0.6), 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+
+.gameover-title {
+  font-size: 2.1em;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+}
+
+.gameover-sub {
+  margin-top: 8px;
+  font-size: 1.05em;
+  color: var(--grid);
+  letter-spacing: 0.06em;
+}
+
+.gameover-cta {
+  margin-top: 14px;
+  font-size: 0.9em;
+  color: var(--cream);
+  background: var(--red);
+  display: inline-block;
+  border-radius: 999px;
+  padding: 6px 16px;
+  letter-spacing: 0.07em;
+}
+
+.hidden { opacity: 0 !important; }
